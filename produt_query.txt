@@ -25,7 +25,7 @@ class studentcontroller extends Controller
                 'email'=>$req->email,
                 'mno'=>$req->mno,
                 'pass'=>$req->pass,
-                'gender'=>$req->gen,
+                'gen'=>$req->gen,
                 'course'=>$req->course,
                 'hobby'=>$req->hobby,
             ]);
@@ -37,7 +37,7 @@ class studentcontroller extends Controller
                 'email'=>$req->email,
                 'mno'=>$req->mno,
                 'pass'=>$req->pass,
-                'gender'=>$req->gen,
+                'gen'=>$req->gen,
                 'course'=>$req->course,
                 'hobby'=>$req->hobby,
             ]);
