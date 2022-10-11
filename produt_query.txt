@@ -1,0 +1,174 @@
+//controller
+
+
+
+<?php
+
+namespace App\Http\Controllers;
+use Illuminate\Support\Facades\DB;
+
+use Illuminate\Http\Request;
+
+class studentcontroller extends Controller
+{
+    function loadview()
+    {
+        $data = DB::table('registration')->get();
+        return view('student', ["Data" => $data]);
+    }
+    function operation(Request $req)
+    {
+        if($req->operation == "insert")
+        {
+            DB::table('registration')->insert([
+                'name'=>$req->name,
+                'email'=>$req->email,
+                'mno'=>$req->mno,
+                'pass'=>$req->pass,
+                'gender'=>$req->gen,
+                'course'=>$req->course,
+                'hobby'=>$req->hobby,
+            ]);
+        }
+        if($req->operation == "update")
+        {
+            DB::table('registration')->where("id", $req->id)->update([
+                'name'=>$req->name,
+                'email'=>$req->email,
+                'mno'=>$req->mno,
+                'pass'=>$req->pass,
+                'gender'=>$req->gen,
+                'course'=>$req->course,
+                'hobby'=>$req->hobby,
+            ]);
+        }
+        return redirect('lv');
+    }
+    function deldata($id){
+        DB::table('registration')->where('id',$id)->delete();
+        return redirect('lv');
+    }
+    function updata($id){
+        $d = DB::table('registration')->where('id', $id)->get();
+        // print_r($d);
+        $r=$d[0];
+        $data = DB::table('registration')->get();
+        return view('student', ["Data" => $data, "Record" => $r]);
+    }
+}
+
+
+
+//web/routes
+
+
+<?php
+
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\studentcontroller;
+
+
+
+Route::get('/', function () {
+    return view('welcome');
+});
+
+
+Route::get('lv', [studentcontroller::class, "loadview"]);
+Route::post('ope', [studentcontroller::class, "operation"]);
+Route::get('deldata/{id}', [studentcontroller::class, "deldata"]);
+Route::get('updata/{id}', [studentcontroller::class, "updata"]);
+
+
+//view
+
+<html>
+<head>
+    <title>Document</title>
+</head>
+<body>
+    <form action = "ope" method = "POST">
+        @csrf
+        <table >
+            <tr>
+                <td>Registration Form</td>
+            </tr>
+            <input type="hidden" name = "id" value = "@isset($Record) {{$Record->id}} @endisset">
+            <tr>
+                <td>name</td>
+                <td><input type="text" name="name" value = "@isset($Record) {{$Record->name}} @endisset"></td>
+            </tr>
+
+            <tr>
+                <td>email</td>
+                <td><input type="email" name="email" value = "@isset($Record) {{$Record->email}} @endisset"></td>
+            </tr>
+            <tr>
+                <td>mno</td>
+                <td><input type="number" name="mno" value = "@isset($Record) {{$Record->mno}} @endisset"></td>
+            </tr>
+
+            <tr>
+                <td>pass</td>
+                <td><input type="password" name="pass" value = "@isset($Record) {{$Record->pass}} @endisset"></td>
+            </tr>
+
+            <tr>
+                <td>gender</td>
+                <td><input type="radio" name="gen" value="male">male
+                <input type="radio" name="gen" value="female">female</td>
+            </tr>
+
+            <tr>
+                <td>course</td>
+                <td><select  name="course" value = "@isset($Record) {{$Record->course}} @endisset">
+                    <option value="dcs">dcs</option>
+                    <option value="dca">dca</option>
+                    <option value="mca">mca</option>
+                </select></td>
+            </tr>
+
+            <tr>
+                <td>hobby</td>
+                <td><input type="checkbox" name="hobby" value="race">race
+                <input type="checkbox" name="hobby" value="badminton">badminton
+                <input type="checkbox" name="hobby" value="ramat">ramat
+            </td>
+            </tr>
+            <tr>
+                <td><input type="submit" value="insert" name="operation"></td>
+                <td><input type="submit" value="update" name="operation"></td>
+            </tr>
+        </table>
+    </form>
+    <br><br>
+    <table border="2">
+        <tr>
+            <td>id</td>
+            <td>name</td>
+            <td>email</td>
+            <td>mno</td>
+            <td>pass</td>
+            <td>gender</td>
+            <td>course</td>
+            <td>hobby</td>
+            <td>delete</td>
+            <td>update</td>
+        </tr>
+        @foreach($Data as $d)
+            <tr>
+                <td>{{$d->id}}</td>
+                <td>{{$d->name}}</td>
+                <td>{{$d->email}}</td>
+                <td>{{$d->mno}}</td>
+                <td>{{$d->pass}}</td>
+                <td>{{$d->gender}}</td>
+                <td>{{$d->course}}</td>
+                <td>{{$d->hobby}}</td>
+                <td><a href="deldata/{{$d->id}}">delete</a></td>
+                <td><a href="updata/{{$d->id}}">update</a></td>
+            </tr>
+        @endforeach
+    </table>
+</body>
+</html>

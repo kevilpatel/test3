@@ -1,0 +1,167 @@
+//model
+
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class product extends Model
+{
+    use HasFactory;
+    public $table="product";
+    public $timestamps=false;
+}
+
+
+//controller
+
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+use App\Models\product;
+
+class productcontroller extends Controller
+{
+    //
+    function insert(Request $req){
+        if($req->operation=='Insert'){
+            $product=new product;
+            $product->name=$req->pnm;
+            $product->price=$req->price;           
+            $product->save();
+            return redirect('/');
+
+        }
+        else if($req->operation=='Update'){
+           product::where('pid',$req->pid)->update(['name'=>$req->pnm,'price'=>$req->price]);
+           return redirect('/');
+        }
+    }
+
+    function viewdata()
+    {
+        $data=product::all();
+        return view('insert',['Data'=>$data]);
+    }
+
+  
+
+    function loadedit(Request $req,$id){
+        if($req->operation=='edit'){
+          $data=product::all();         
+          $rec=product::where('pid',$id)->get();
+          return view('insert',['Data'=>$data,'Record'=>$rec]);
+        }
+        else if($req->operation=='delete'){
+            product::where('pid',$id)->delete();
+            return redirect('/');
+        }        
+    }
+}
+
+
+//view
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRUD</title>
+    <!-- CSS only -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-iYQeCzEYFbKjA/T2uDLTpkwGzCiq6soy8tYaI1GyVh/UjpbCx/TYkiZhlZB6+fzT" crossorigin="anonymous">
+<!-- JavaScript Bundle with Popper -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-u1OknCvxWvY5kfmNBILK2hRnQC3Pr17a+RTT6rIHI7NnikvbZlHgTPOOmMi466C8" crossorigin="anonymous"></script>
+</head>
+<body>
+  <!-- <center> <h2>CRUD OPERATION</h2></center> -->
+
+  <!-- <form method="post" action='adddata'> -->
+  @include ("welcome")
+  <form method="post" action="insert" enctype="multipart/form-data">
+  @csrf
+  <input type="hidden" name="pid" @isset($Record) value={{$Record[0]->pid}} @endisset class="form-control" id="exampleInputPassword1">
+<div class="mb-3"> 
+    <label for="exampleInputEmail1" class="form-label">Product Name</label>
+    <input type="text" name="pnm" @isset($Record) value={{$Record[0]->name}} @endisset class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp">
+</div>
+<div class="mb-3">
+    <label for="exampleInputPassword1" class="form-label">Price</label>
+    <input type="number" name="price" @isset($Record) value={{$Record[0]->price}} @endisset class="form-control" id="exampleInputPassword1">
+</div>
+
+
+<center><input type="submit" name="operation" value="Insert" class="btn btn-outline-dark">&nbsp;&nbsp;
+        <input type="submit" name="operation" value="Update" class="btn btn-outline-dark"></center>
+</form>
+
+
+<table border="2">
+    <tr>
+        <td>ID</td>
+        <td>Name</td>
+        <td>Price</td>
+    </tr>
+    @foreach($Data as $d)
+    <form method="get" action={{URL::to("editordel$d->pid")}}>
+    <tr>
+        <td>{{$d['pid']}}</td>
+        <td>{{$d['name']}}</td>
+        <td>{{$d['price']}}</td>
+        <td><input type="submit" name="operation" value="edit" class="btn btn-outline-dark"></td>
+        <td><input type="submit" name="operation" value="delete" class="btn btn-outline-dark"></td>
+
+      
+
+
+    </tr>
+    </form>
+    @endforeach
+
+</table>
+</body>
+</html>
+
+
+// web  Routes
+
+
+<?php
+
+use App\Http\Controllers\productcontroller;
+use Illuminate\Support\Facades\Route;
+
+/*
+|--------------------------------------------------------------------------
+| Web Routes
+|--------------------------------------------------------------------------
+|
+| Here is where you can register web routes for your application. These
+| routes are loaded by the RouteServiceProvider within a group which
+| contains the "web" middleware group. Now create something great!
+|
+*/
+
+Route::get('/', function () {
+    return view('insert');
+});
+Route::view('/','insert');
+Route::post('insert',[productcontroller::class,'insert']);
+
+Route::get('/',[productcontroller::class,'viewdata']);
+Route::get('editordel{pid}',[productcontroller::class,'loadedit']);
+// Route::get('updatedata/{id}',[productcontroller::class,'updatedata']);
+
+
+
+
+
+
