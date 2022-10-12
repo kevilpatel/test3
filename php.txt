@@ -1,0 +1,216 @@
+//----------------UserController.php---------------------
+
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+
+class UserController extends Controller
+{
+    function loadData(Request $req) {
+        $employees = DB::table('employee')->get();
+        $req->session()->put('employee', 'Nancy');
+        return view('employees', ['employees'=>$employees]);
+    }
+
+    function addEmployee(Request $req) {
+
+        //$file = Request()->photo;
+        $baseName = $req->photo->getClientOriginalName();
+        $ext = $req->photo->getClientOriginalExtension();
+        $newFileName = md5($baseName).time().rand(50, 1000).'.'.$ext;
+        $req->photo->move(public_path('uploads'), $newFileName);
+
+        DB::table('employee')->insert([
+            'name'=>$req->name,
+            'photo'=>$newFileName
+        ]);
+        
+        return redirect('employees');
+    }
+
+    function fetchEmployee($id) {
+        $val = DB::table('employee')->where('id', $id)->get();
+        $val1 = @json_decode(json_encode($val), true);
+        $val2 = $val1[0];
+        $employee = DB::table('employee')->get();
+        return view('updateEmployee', ['employee'=>$employee, 'test'=>$val2]);
+    }
+
+    function updateEmployee(Request $req) {
+
+        DB::table('employee')->where('id', $req->id)->update([
+            'name'=>$req->name,
+        ]);
+        
+        return redirect('employees');
+    }
+
+    function deleteEmployee($id) {
+        DB::table('employee')->where('id', $id)->delete();
+        return redirect('employees');
+    }
+
+    function loginUser(Request $req) {
+        $user = DB::table('employee')->where('name', $req->name)->where('id', $req->id)->get();
+        // $val1 = @json_decode(json_encode($val), true);
+        // $val2 = $val1[0];
+        // $employee = DB::table('employee')->get();
+        if($user->isEmpty() != 1) {
+            $req->session()->put('user', $req->name);
+            return redirect('employees');
+        } else
+            return redirect('login');
+    }
+}
+
+
+
+
+
+
+//---------------------------------------------
+
+//-------------------------employees.blade.php------------------------
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <h1>Welcome {{session('user')}}</h1>
+    <table>
+        <thead>
+            <th>#</th>
+            <th>Name</th>
+            <th>Photo</th>
+        </thead>
+        <tbody>
+            @foreach($employees as $employee)
+            <tr>
+                <td>{{$employee->id}}</td>
+                <td>{{$employee->name}}</td>
+                <td><img src="{{asset('uploads/'.$employee->photo)}}" width="100" heigth="100"></td>
+                <td><a href="{{URL:: to('update-employee/'.$employee->id)}}">Edit</a></td>
+                <td><a href="{{URL:: to('deleteEmployee/'.$employee->id)}}">Delete</a></td>
+            </tr>
+            @endforeach
+        </tbody>
+    </table>
+</body>
+</html>
+
+//---------------------insertEmployee.blade.php---------------
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <form action="addEmployee" method="POST" enctype="multipart/form-data">
+    @csrf
+        <input type="text" name="name">
+        <input type="file" name="photo">
+        <input type="submit" value="Register">
+    </form>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+//---------------------updateEmployee.blade.php---------------
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <form action="updateEmployee" method="POST" enctype="multipart/form-data">
+    @csrf
+        <input type="hidden" name="id" value="{{$test['id']}}">
+        <input type="text" name="name" value="{{$test['name']}}">
+        <input type="submit" value="Update">
+    </form>
+</body>
+</html>
+
+
+
+//--------------------------login.blade.php--------------------
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <form action="loginUser" method="post">
+        @csrf
+        <input type="text" name="id">
+        <input type="text" name="name">
+        <input type="submit" value="Login">
+    </form>
+</body>
+</html>
+
+
+//--------------------------------------
+
+//--------------------------web.php--------------------------
+
+<?php
+
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\UserController;
+
+Route::view('/login', 'login');
+
+Route::view('/noaccess', 'noaccess');
+
+Route::view('/employees', 'employees');
+
+Route::view('/add-employee', 'insertEmployee');
+
+Route::view('/update-employee/{id}', 'updateEmployee');
+
+Route::get('/update-employee/{id}', [UserController::class, 'fetchEmployee']);
+
+Route::post('/update-employee/updateEmployee', [UserController::class, 'updateEmployee']);
+
+Route::get('/deleteEmployee/{id}', [UserController::class, 'deleteEmployee']);
+
+Route::post('addEmployee', [UserController::class, 'addEmployee']);
+
+Route::post('loginUser', [UserController::class, 'loginUser']);
+
+Route::get('/employees', [UserController::class, 'loadData']);
+
+
+
+
